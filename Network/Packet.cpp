@@ -33,13 +33,16 @@ namespace swl
 	}
 	Packet& Packet::operator>>(std::string& data)
 	{
-		uint32_t stringSize{ 0 };
-		*this >> stringSize;
-		if (readPos + stringSize <= this->data.size())
+		if (readPos + sizeof(uint32_t) <= this->data.size())
 		{
-			data.reserve(stringSize);
-			data.assign(&this->data[readPos], stringSize);
-			readPos += stringSize;
+			uint32_t stringSize{ 0 };
+			*this >> stringSize;
+			if (readPos + stringSize <= this->data.size())
+			{
+				data.reserve(stringSize);
+				data.assign(&this->data[readPos], stringSize);
+				readPos += stringSize;
+			}
 		}
 		return *this;
 	}
