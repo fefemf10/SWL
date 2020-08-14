@@ -4,7 +4,8 @@ namespace swl
 {
     TCPSocket::TCPSocket() : Socket{ socket(AF_INET, SOCK_STREAM, IPPROTO_TCP) }
     {
-        setsockopt(handle, IPPROTO_TCP, TCP_NODELAY, (char*)0x01, 1);
+        char value = 1;
+        setsockopt(handle, IPPROTO_TCP, TCP_NODELAY, &value, 1);
     }
     TCPSocket::TCPSocket(SOCKET& handle) : Socket{ handle }
     {
@@ -22,7 +23,7 @@ namespace swl
         int len = sizeof(addr);
         SOCKET acceptedHandle = ::accept(handle, (sockaddr*)(&addr), &len);
         if (acceptedHandle == INVALID_SOCKET)
-            return Status::Error;
+            return getErrorStatus();
 
         socket = TCPSocket(acceptedHandle);
         return Status::Done;
@@ -30,15 +31,16 @@ namespace swl
     Socket::Status TCPSocket::connect(const IPEndpoint& endpoint, const uint16_t& port)
     {
         if (::connect(handle, (sockaddr*)(&IPEndpoint::createAddress(endpoint.toInteger(), port)), sizeof(sockaddr_in)))
-            return Status::Error;
+            return getErrorStatus();
         return Status::Done;
     }
     Socket::Status TCPSocket::send(const void* data, const uint32_t& numberBytes, uint32_t& bytesSent)
     {
         bytesSent = ::send(handle, (const char*)data, numberBytes, NULL);
-        //std::cout << WSAGetLastError() << std::endl;
-        if (bytesSent == SOCKET_ERROR)
-            return Status::Error;
+        if (bytesSent < numberBytes)
+            return Socket::Partial;
+        if (bytesSent > 2147483647)
+            return getErrorStatus();
         return Status::Done;
     }
     Socket::Status TCPSocket::sendAll(const void* data, const uint32_t& numberBytes)
@@ -49,8 +51,9 @@ namespace swl
             uint32_t bytesRemainig = numberBytes - totalBytesSent;
             uint32_t bytesSent{ 0 };
             char* bufferOffset = (char*)data + totalBytesSent;
-            if (send(bufferOffset, bytesRemainig, bytesSent))
-                return Status::Error;
+            Socket::Status status = send(bufferOffset, bytesRemainig, bytesSent);
+            if (status != Status::Partial && status != Status::Done)
+                return getErrorStatus();
             totalBytesSent += bytesSent;
         }
         return Status::Done;
@@ -58,11 +61,10 @@ namespace swl
     Socket::Status TCPSocket::receive(void* destination, const uint32_t& numberBytes, uint32_t& bytesRecived)
     {
         bytesRecived = ::recv(handle, (char*)destination, numberBytes, NULL);
-        //std::cout << WSAGetLastError() << std::endl;
-        if (bytesRecived == 0)
-            return Status::Error;
-        if (bytesRecived == SOCKET_ERROR)
-            return Status::Error;
+        if (bytesRecived < numberBytes)
+            return Socket::Partial;
+        if (bytesRecived > 2147483647)
+            return getErrorStatus();
         return Status::Done;
     }
     Socket::Status TCPSocket::receiveAll(void* destination, const uint32_t& numberBytes)
@@ -73,8 +75,9 @@ namespace swl
             uint32_t bytesRemainig = numberBytes - totalBytesReceived;
             uint32_t bytesReceived{ 0 };
             char* bufferOffset = (char*)destination + totalBytesReceived;
-            if (receive(bufferOffset, bytesRemainig, bytesReceived))
-                return Status::Error;
+            Socket::Status status = receive(bufferOffset, bytesRemainig, bytesReceived);
+            if (status != Status::Partial && status != Status::Done)
+                return getErrorStatus();
             totalBytesReceived += bytesReceived;
         }
         return Status::Done;
@@ -83,10 +86,10 @@ namespace swl
     {
         uint32_t packetSize = htonl(packet.getSize());
         if (sendAll(&packetSize, sizeof(uint32_t)))
-            return Status::Error;
+            return getErrorStatus();
 
         if (sendAll(packet.getData(), packet.getSize()))
-            return Status::Error;
+            return getErrorStatus();
         return Status::Done;
     }
     Socket::Status TCPSocket::receive(Packet& packet)
@@ -94,13 +97,13 @@ namespace swl
         packet.clear();
         uint32_t packetSize{ 0 };
         if (receiveAll(&packetSize, sizeof(uint32_t)))
-            return Status::Error;
+            return getErrorStatus();
 
         packetSize = ntohl(packetSize);
         packet.resize(packetSize);
 
         if (receiveAll(packet.getData(), packetSize))
-            return Status::Error;
+            return getErrorStatus();
         return Status::Done;
     }
 }
