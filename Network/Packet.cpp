@@ -1,4 +1,6 @@
 #include "Packet.hpp"
+#include <fstream>
+#include <iostream>
 
 namespace swl
 {
@@ -39,6 +41,23 @@ namespace swl
 			data.assign(&this->data[readPos], stringSize);
 			readPos += stringSize;
 		}
+		return *this;
+	}
+	Packet& Packet::operator<<(File& file)
+	{
+		*this << file.getFileName();
+		*this << file.getDataSize();
+		this->append(file.getFileData(), file.getDataSize());
+		return *this;
+	}
+	Packet& Packet::operator>>(File& file)
+	{
+		std::string tempName;
+		std::vector<char> tempData;
+		*this >> tempName;
+		file.setFileName(tempName);
+		*this >> tempData;
+		file.setFileData(tempData);
 		return *this;
 	}
 }

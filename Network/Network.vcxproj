@@ -171,6 +171,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="File.cpp" />
     <ClCompile Include="IPEndpoint.cpp" />
     <ClCompile Include="Network.cpp" />
     <ClCompile Include="Packet.cpp" />
@@ -179,6 +180,7 @@
     <ClCompile Include="UDPSocket.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="File.hpp" />
     <ClInclude Include="IPEndpoint.hpp" />
     <ClInclude Include="Network.hpp" />
     <ClInclude Include="Packet.hpp" />
