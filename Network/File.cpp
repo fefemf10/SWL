@@ -50,7 +50,6 @@ namespace swl
 
 	void File::setFileData(const std::vector<char>& data)
 	{
-		//this->data.resize(data.size());
 		this->data = data;
 	}
 
@@ -59,10 +58,12 @@ namespace swl
 		this->fileName = name;
 	}
 
-	void File::readFile()
+	bool File::readFile()
 	{
 		std::ifstream fileIn;
 		fileIn.open((this->filePath + this->fileName), std::ios::binary);
+		if (!fileIn.is_open())
+			return true;
 		int length;
 		fileIn.seekg(0, std::ios::end);
 		length = fileIn.tellg();
@@ -70,6 +71,7 @@ namespace swl
 		this->data.resize(length);
 		fileIn.read(this->data.data(), length);
 		fileIn.close();
+		return false;
 	}
 	
 	void File::saveFile()

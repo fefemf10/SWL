@@ -7,7 +7,17 @@ namespace swl
 	}
 	IPEndpoint::IPEndpoint(const std::string& ip)
 	{
-		inet_pton(AF_INET, ip.c_str(), &this->ip.S_un.S_addr);
+		if (InetPtonA(AF_INET, ip.c_str(), &this->ip.S_un.S_addr) != 1)
+		{
+			addrinfo hints{};
+			hints.ai_family = AF_INET;
+			addrinfo* hostinfo{};
+			if (!getaddrinfo(ip.c_str(), nullptr, &hints, &hostinfo))
+			{
+				memcpy(&this->ip.S_un.S_addr, hostinfo->ai_addr->sa_data + 2, 4);
+				freeaddrinfo(hostinfo);
+			}
+		}
 	}
 	IPEndpoint::IPEndpoint(const uint32_t& ip)
 	{
@@ -17,7 +27,7 @@ namespace swl
 	{
 		ip = addr;
 	}
-	IPEndpoint& IPEndpoint::getLocalAddress()
+	IPEndpoint IPEndpoint::getLocalAddress()
 	{
 		IPEndpoint localAddress;
 		SOCKET sock = ::socket(AF_INET, SOCK_DGRAM, 0);
@@ -54,7 +64,13 @@ namespace swl
 	}
 	std::string IPEndpoint::toString() const
 	{
-		return std::string(std::to_string(ip.S_un.S_addr >> 24 & 0xFF) + "." + std::to_string(ip.S_un.S_addr >> 16 & 0xFF) + "." + std::to_string(ip.S_un.S_addr >> 8 & 0xFF) + "." + std::to_string(ip.S_un.S_addr & 0xFF));
+		sockaddr addr{};
+		addr.sa_family = AF_INET;
+		memcpy(addr.sa_data+2, &ip.S_un.S_addr, 4);
+		char buffer[20];
+		unsigned long size = 16;
+		WSAAddressToStringA(&addr, sizeof(sockaddr), 0, buffer, &size);
+		return std::string(buffer);
 	}
 	uint32_t IPEndpoint::toInteger() const
 	{

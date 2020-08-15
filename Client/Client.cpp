@@ -31,29 +31,16 @@ int main()
 		}
 		socket.close();*/
 		TCPSocket socket;
-		socket.setBlocking(true);
-		IPEndpoint ip("127.0.0.1");
-		socket.bind(ip, 50001);
-		if (socket.connect(ip, 50000) == Socket::NotReady)
-			std::cout << "NotReady";
-		
-		std::string buffer = "Heellow asd";
+		socket.bind(IPEndpoint::getLocalAddress(), 50001);
+		socket.connect(IPEndpoint::getLocalAddress(), 50000);
 		Packet packet;
-		packet << buffer;
+		File file("1.txt");
+		file.readFile();
+		packet << file;
 		socket.send(packet);
 		socket.close();
 	}
 	Network::shutdown();
-	system("pause");
-	std::string test{};
-	std::string filepath{"Network.pdb"};
-	Packet packet;
-	File file(filepath);
-	File fileBack;
-	file.readFile();
-	packet << file;
-	packet >> fileBack;
-	fileBack.saveFile();
 	system("pause");
 	return 0;
 }

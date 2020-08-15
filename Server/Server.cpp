@@ -28,18 +28,15 @@ int main()
 		}
 		socket.close();*/
 		TCPSocket socket;
-		socket.setBlocking(true);
-		IPEndpoint ip("127.0.0.1");
-		socket.bind(ip, 50000);
+		socket.bind(IPEndpoint::getLocalAddress(), 50000);
 		socket.listen();
 		TCPSocket client;
-		client.setBlocking(true);
-		std::string buffer = "";
 		socket.accept(client);
 		Packet packet;
+		File file;
 		client.receive(packet);
-		packet >> buffer;
-		std::cout << buffer << std::endl;
+		packet >> file;
+		file.saveFile();
 		socket.close();
 	}
 	Network::shutdown();

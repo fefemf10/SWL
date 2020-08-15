@@ -23,7 +23,7 @@ namespace swl
 		void setFileName(const std::string& name);
 		void setFileData(const std::vector<char>& data);
 
-		void readFile();
+		bool readFile();
 
 		void saveFile();
 
