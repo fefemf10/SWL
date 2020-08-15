@@ -72,9 +72,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <LibraryPath>$(SolutionDir);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <LibraryPath>$(SolutionDir);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -89,7 +91,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <GenerateXMLDocumentationFiles>false</GenerateXMLDocumentationFiles>
@@ -101,7 +103,7 @@
       <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;liblz4_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
     <Xdcmake>
       <AdditionalDocumentFile>%(AdditionalDocumentFile)</AdditionalDocumentFile>
@@ -130,7 +132,7 @@
       <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;liblz4_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
     <Xdcmake>
       <AdditionalDocumentFile>%(AdditionalDocumentFile)</AdditionalDocumentFile>
@@ -178,15 +180,20 @@
     <ClCompile Include="Socket.cpp" />
     <ClCompile Include="TCPSocket.cpp" />
     <ClCompile Include="UDPSocket.cpp" />
+    <ClCompile Include="ZipPacket.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="File.hpp" />
     <ClInclude Include="IPEndpoint.hpp" />
+    <ClInclude Include="lz4.h" />
+    <ClInclude Include="lz4frame.h" />
+    <ClInclude Include="lz4hc.h" />
     <ClInclude Include="Network.hpp" />
     <ClInclude Include="Packet.hpp" />
     <ClInclude Include="Socket.hpp" />
     <ClInclude Include="TCPSocket.hpp" />
     <ClInclude Include="UDPSocket.hpp" />
+    <ClInclude Include="ZipPacket.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

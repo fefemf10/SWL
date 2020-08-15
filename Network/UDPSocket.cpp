@@ -56,11 +56,11 @@ namespace swl
     }
     Socket::Status UDPSocket::send(Packet& packet, const IPEndpoint& ip, const uint16_t& port)
     {
-        uint32_t packetSize = htonl(packet.getSize());
+        uint32_t packetSize{ 0 };
+        const void* data = packet.onSend(packetSize);
         if (sendAll(&packetSize, sizeof(uint32_t), ip, port))
             return getErrorStatus();
-
-        if (sendAll(packet.getData(), packet.getSize(), ip, port))
+        if (sendAll(data, packetSize, ip, port))
             return getErrorStatus();
         return Status::Done;
     }
@@ -70,12 +70,11 @@ namespace swl
         uint32_t packetSize{ 0 };
         if (receiveAll(&packetSize, sizeof(uint32_t), ip, port))
             return getErrorStatus();
-
-        packetSize = ntohl(packetSize);
-        packet.resize(packetSize);
-
-        if (receiveAll(packet.getData(), packetSize, ip, port))
+        void* data = new char[packetSize];
+        if (receiveAll(data, packetSize, ip, port))
             return getErrorStatus();
+        packet.onReceive(data, packetSize);
+        delete[] data;
         return Status::Done;
     }
 }

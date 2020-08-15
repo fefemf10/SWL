@@ -63,4 +63,13 @@ namespace swl
 		file.setFileData(tempData);
 		return *this;
 	}
+	const void* Packet::onSend(std::uint32_t& size)
+	{
+		size = getSize();
+		return getData();
+	}
+	void Packet::onReceive(const void* data, const std::uint32_t& size)
+	{
+		append(data, size);
+	}
 }

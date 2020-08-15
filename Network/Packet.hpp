@@ -6,6 +6,8 @@
 
 namespace swl
 {
+	class TCPSocket;
+	class UDPSocket;
 	class Packet
 	{
 	public:
@@ -26,6 +28,11 @@ namespace swl
 		Packet& operator >> (std::string& data);
 		Packet& operator << (File& file);
 		Packet& operator >> (File& file);
+	protected:
+		friend TCPSocket;
+		friend UDPSocket;
+		virtual const void* onSend(std::uint32_t& size);
+		virtual void onReceive(const void* data, const std::uint32_t& size);
 	private:
 		uint32_t readPos = 0;
 		std::vector<char> data;

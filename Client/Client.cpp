@@ -5,7 +5,7 @@
 #include <Network/TCPSocket.hpp>
 #include <Network/UDPSocket.hpp>
 #include <Network/IPEndpoint.hpp>
-#include <Network/Packet.hpp>
+#include <Network/ZipPacket.hpp>
 #include <Network/File.hpp>
 
 using namespace swl;
