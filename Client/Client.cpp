@@ -2,11 +2,8 @@
 #include <iostream>
 #include <fstream>
 #include <Network/Network.hpp>
-#include <Network/TCPSocket.hpp>
-#include <Network/UDPSocket.hpp>
-#include <Network/IPEndpoint.hpp>
-#include <Network/ZipPacket.hpp>
-#include <Network/File.hpp>
+#include <Network/SocketSelector.hpp>
+#include <Network/Client.hpp>
 
 using namespace swl;
 
@@ -15,32 +12,39 @@ int main()
 	setlocale(LC_ALL, "UTF8");
 	if (Network::initialize())
 	{
-		/*std::cout << "Winsock api successfully initialized.\n";
-		UDPSocket socket;
-		IPEndpoint ip("127.0.0.1");
-		if (socket.bind(ip, 50001))
-			return 0;
-		std::string buffer = "Heellow asd";
-		while (true)
-		{
+		UDPClient client;
+		client.connect(IPEndpoint::getLocalAddress(), 50000);
+		std::thread([&]()
+			{
+				std::string buffer;
+				Packet packet;
+				uint32_t id{};
+				while (client.isConnected())
+				{
+					packet = client.getLastPacket(id);
+					if (packet.getSize() > 0)
+					{
+						packet >> buffer;
+						std::cout << buffer << " id=" << id << std::endl;
+					}
+					Sleep(16);
+				}
+			}).detach();
 			Packet packet;
+			uint32_t id{};
+			std::string buffer = "Heelloo";
 			packet << buffer;
-			if (socket.send(packet, ip, 50000) != Socket::Done)
-				break;
-			Sleep(500);
-		}
-		socket.close();*/
-		TCPSocket socket;
-		socket.bind(IPEndpoint::getLocalAddress(), 50001);
-		socket.connect(IPEndpoint::getLocalAddress(), 50000);
-		Packet packet;
-		File file("1.txt");
-		file.readFile();
-		packet << file;
-		socket.send(packet);
-		socket.close();
+			int i = 0;
+			while (client.isConnected())
+			{
+				if (i == 10) client.disconnect();
+				client.send(packet, id);
+				i++;
+				Sleep(1000);
+			}
+			system("pause");
+			client.disconnect();
+			Network::shutdown();
 	}
-	Network::shutdown();
-	system("pause");
 	return 0;
 }

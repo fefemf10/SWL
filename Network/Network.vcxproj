@@ -173,16 +173,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Client.cpp" />
     <ClCompile Include="File.cpp" />
     <ClCompile Include="IPEndpoint.cpp" />
     <ClCompile Include="Network.cpp" />
     <ClCompile Include="Packet.cpp" />
+    <ClCompile Include="Server.cpp" />
     <ClCompile Include="Socket.cpp" />
+    <ClCompile Include="SocketSelector.cpp" />
     <ClCompile Include="TCPSocket.cpp" />
     <ClCompile Include="UDPSocket.cpp" />
     <ClCompile Include="ZipPacket.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Client.hpp" />
     <ClInclude Include="File.hpp" />
     <ClInclude Include="IPEndpoint.hpp" />
     <ClInclude Include="lz4.h" />
@@ -190,7 +194,9 @@
     <ClInclude Include="lz4hc.h" />
     <ClInclude Include="Network.hpp" />
     <ClInclude Include="Packet.hpp" />
+    <ClInclude Include="Server.hpp" />
     <ClInclude Include="Socket.hpp" />
+    <ClInclude Include="SocketSelector.hpp" />
     <ClInclude Include="TCPSocket.hpp" />
     <ClInclude Include="UDPSocket.hpp" />
     <ClInclude Include="ZipPacket.hpp" />

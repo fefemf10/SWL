@@ -6,6 +6,9 @@ namespace swl
 	{
 		this->handle = handle;
 	}
+	Socket::~Socket()
+	{
+	}
 	Socket::Status Socket::bind(const IPEndpoint& endpoint, const uint16_t& port)
 	{
 		if (::bind(handle, (sockaddr*)(&IPEndpoint::createAddress(endpoint.toInteger(), port)), sizeof(sockaddr_in)))
@@ -27,7 +30,7 @@ namespace swl
 	}
 	Socket::Status Socket::setBlocking(const bool& blocking)
 	{
-		unsigned long b = blocking;
+		unsigned long b = !blocking;
 		if (ioctlsocket(handle, FIONBIO, &b))
 			return getErrorStatus();
 		return Socket::Done;

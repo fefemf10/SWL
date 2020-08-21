@@ -18,6 +18,8 @@ namespace swl
 		uint32_t toInteger() const;
 		static IPEndpoint getLocalAddress();
 		static sockaddr_in createAddress(const uint32_t& ip, const uint16_t& port);
+		bool operator == (const IPEndpoint& ip);
+		bool operator != (const IPEndpoint& ip);
 	private:
 		in_addr ip;
 	};

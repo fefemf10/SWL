@@ -62,6 +62,14 @@ namespace swl
 		addr.sin_port = port;
 		return addr;
 	}
+	bool IPEndpoint::operator==(const IPEndpoint& ip)
+	{
+		return this->ip.S_un.S_addr == ip.ip.S_un.S_addr;
+	}
+	bool IPEndpoint::operator!=(const IPEndpoint& ip)
+	{
+		return this->ip.S_un.S_addr != ip.ip.S_un.S_addr;
+	}
 	std::string IPEndpoint::toString() const
 	{
 		sockaddr addr{};

@@ -11,7 +11,7 @@ namespace swl
 
     void ZipPacket::onReceive(const void* data, const uint32_t& size)
     {
-        char* outData = new char[size*3-2];
+        char* outData = new char[size*2.25];
         uint32_t outSize = LZ4_decompress_safe((const char*)data, outData, size, size*3-2);
         if (outSize > 0)
             append(outData, outSize);

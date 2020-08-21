@@ -11,6 +11,7 @@ namespace swl
 	class Packet
 	{
 	public:
+		Packet();
 		void clear();
 		void resize(const uint32_t& size);
 		uint32_t getSize() const;

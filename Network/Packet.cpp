@@ -4,6 +4,10 @@
 
 namespace swl
 {
+	Packet::Packet()
+	{
+
+	}
 	void Packet::clear()
 	{
 		data.clear();
