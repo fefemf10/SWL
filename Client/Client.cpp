@@ -12,8 +12,8 @@ int main()
 	setlocale(LC_ALL, "UTF8");
 	if (Network::initialize())
 	{
-		UDPClient client;
-		client.connect(IPEndpoint::getLocalAddress(), 50000);
+		TCPClient client;
+		client.connect(IPEndpoint::getLocalAddress(), 25565);
 		std::thread([&]()
 			{
 				std::string buffer;
@@ -34,12 +34,9 @@ int main()
 			uint32_t id{};
 			std::string buffer = "Heelloo";
 			packet << buffer;
-			int i = 0;
 			while (client.isConnected())
 			{
-				if (i == 10) client.disconnect();
 				client.send(packet, id);
-				i++;
 				Sleep(1000);
 			}
 			system("pause");

@@ -9,9 +9,9 @@ namespace swl
 	Socket::~Socket()
 	{
 	}
-	Socket::Status Socket::bind(const IPEndpoint& endpoint, const uint16_t& port)
+	Socket::Status Socket::bind(const IPEndpoint& ip, const uint16_t& port)
 	{
-		if (::bind(handle, (sockaddr*)(&IPEndpoint::createAddress(endpoint.toInteger(), port)), sizeof(sockaddr_in)))
+		if (::bind(handle, (sockaddr*)&IPEndpoint::CreateAddress(ip.toInteger(), port), sizeof(sockaddr_in)))
 			return Status::Error;
 		return Status::Done;
 	}

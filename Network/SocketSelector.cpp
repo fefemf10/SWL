@@ -2,53 +2,65 @@
 
 namespace swl
 {
-    SocketSelector::SocketSelector()
-    {
+	SocketSelector::SocketSelector() : sockets{}
+	{
 
-    }
+	}
+	SocketSelector::~SocketSelector()
+	{
+	}
 	void SocketSelector::add(Socket& socket)
 	{
-        SOCKET handle = socket.getHandle();
-        if (handle != INVALID_SOCKET)
-        {
-            if (socketCount >= FD_SETSIZE)
-                return;
-            if (FD_ISSET(handle, &allSockets))
-                return;
-            socketCount++;
-            FD_SET(handle, &allSockets);
-        }
+		SOCKET handle = socket.getHandle();
+		if (handle != INVALID_SOCKET)
+			sockets.push_back(pollfd{ handle, POLLRDNORM | POLLWRNORM | POLLERR | POLLHUP });
 	}
 	void SocketSelector::remove(Socket& socket)
 	{
-        SOCKET handle = socket.getHandle();
-        if (handle != INVALID_SOCKET)
-        {
-            if (!FD_ISSET(handle, &allSockets))
-                return;
-            socketCount--;
-            FD_CLR(handle, &allSockets);
-            FD_CLR(handle, &readySockets);
-        }
+		SOCKET handle = socket.getHandle();
+		if (handle != INVALID_SOCKET)
+		{
+			for (size_t i = 0; i < sockets.size(); i++)
+			{
+				if (sockets[i].fd == handle)
+				{
+					sockets.erase(sockets.begin() + i);
+					break;
+				}
+			}
+		}
 	}
-	bool SocketSelector::wait(uint64_t millisecond)
+	bool SocketSelector::wait(int32_t millisecond)
 	{
-		timeval time{millisecond/1000, millisecond * 1000};
-        readySockets = allSockets;
-        int count = select(1, &readySockets, NULL, NULL, millisecond != 0 ? &time : NULL);
-        return count > 0;
+		int count = WSAPoll(sockets.data(), sockets.size(), millisecond);
+		return count > 0;
 	}
-	bool SocketSelector::isReady(Socket& socket)
+	SocketSelector::Status SocketSelector::isReady(Socket& socket)
 	{
-        SOCKET handle = socket.getHandle();
-        if (handle != INVALID_SOCKET)
-            return FD_ISSET(handle, &readySockets) != 0;
-        return false;
+		SOCKET handle = socket.getHandle();
+		if (handle != INVALID_SOCKET)
+		{
+			for (auto& socket : sockets)
+			{
+				if (socket.fd == handle)
+				{
+					if (socket.revents & POLLRDNORM)
+						return Status::Read;
+					else if (socket.revents & POLLWRNORM)
+						return Status::Write;
+					else if (socket.revents & POLLERR)
+						return Status::Error;
+					else if (socket.revents & POLLHUP)
+						return Status::Disconnected;
+				}
+			}
+		}
+		else
+			return Status::Error;
+		return Status::NotReady;
 	}
 	void SocketSelector::clear()
 	{
-        FD_ZERO(&allSockets);
-        FD_ZERO(&readySockets);
-        socketCount = 0;
+		sockets.clear();
 	}
 }

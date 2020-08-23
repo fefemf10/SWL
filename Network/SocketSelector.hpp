@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <vector>
 #include "Socket.hpp"
 
 namespace swl
@@ -7,15 +8,22 @@ namespace swl
 	class SocketSelector
 	{
 	public:
+		enum Status
+		{
+			Read,
+			Write,
+			NotReady,
+			Disconnected,
+			Error
+		};
 		SocketSelector();
+		~SocketSelector();
 		void add(Socket& socket);
 		void remove(Socket& socket);
-		bool wait(uint64_t millisecond = 0);
-		bool isReady(Socket& socket);
+		bool wait(int32_t millisecond = -1);
+		SocketSelector::Status isReady(Socket& socket);
 		void clear();
 	private:
-		fd_set allSockets;
-		fd_set readySockets;
-		uint32_t socketCount;
+		std::vector<pollfd> sockets;
 	};
 }

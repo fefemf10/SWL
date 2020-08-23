@@ -11,7 +11,15 @@ namespace swl
 	class Packet
 	{
 	public:
+		enum
+		{
+			Chat,
+			FileBegin,
+			FilePart,
+			FileEnd,
+		};
 		Packet();
+		virtual ~Packet();
 		void clear();
 		void resize(const uint32_t& size);
 		uint32_t getSize() const;

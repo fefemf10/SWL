@@ -4,9 +4,11 @@
 
 namespace swl
 {
-	Packet::Packet()
+	Packet::Packet() : readPos{ 0 }, data{}
 	{
-
+	}
+	Packet::~Packet()
+	{
 	}
 	void Packet::clear()
 	{

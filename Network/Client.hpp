@@ -13,6 +13,7 @@ namespace swl
 	{
 	public:
 		Client();
+		virtual ~Client();
 		virtual Socket::Status connect(const IPEndpoint& ip, const uint16_t& port) = 0;
 		virtual void disconnect() = 0;
 		virtual void send(Packet& packet, uint32_t id) = 0;
@@ -26,6 +27,7 @@ namespace swl
 	{
 	public:
 		TCPClient();
+		~TCPClient() override;
 		Socket::Status connect(const IPEndpoint& ip, const uint16_t& port) override;
 		void disconnect() override;
 		void send(Packet& packet, uint32_t id) override;
@@ -37,6 +39,7 @@ namespace swl
 	{
 	public:
 		UDPClient();
+		~UDPClient() override;
 		Socket::Status connect(const IPEndpoint& ip, const uint16_t& port) override;
 		void disconnect() override;
 		void send(Packet& packet, uint32_t id) override;

@@ -104,6 +104,7 @@
     </Link>
     <Lib>
       <AdditionalDependencies>ws2_32.lib;liblz4_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <Xdcmake>
       <AdditionalDocumentFile>%(AdditionalDocumentFile)</AdditionalDocumentFile>
@@ -133,6 +134,7 @@
     </Link>
     <Lib>
       <AdditionalDependencies>ws2_32.lib;liblz4_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <Xdcmake>
       <AdditionalDocumentFile>%(AdditionalDocumentFile)</AdditionalDocumentFile>

@@ -6,9 +6,13 @@ namespace swl
 	{
 		
 	}
+	UDPSocket::~UDPSocket()
+	{
+
+	}
 	Socket::Status UDPSocket::send(const void* data, const uint32_t& numberBytes, uint32_t& bytesSent, const IPEndpoint& ip, const uint16_t& port)
 	{
-		bytesSent = ::sendto(handle, (const char*)data, numberBytes, NULL, (sockaddr*)&IPEndpoint::createAddress(ip.toInteger(), port), sizeof(sockaddr));
+		bytesSent = ::sendto(handle, (const char*)data, numberBytes, NULL, (sockaddr*)&IPEndpoint::CreateAddress(ip.toInteger(), port), sizeof(sockaddr_in));
 		if (bytesSent > 2147483647)
 			return getErrorStatus();
 		return Status::Done;

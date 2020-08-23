@@ -2,7 +2,7 @@
 
 namespace swl
 {
-	IPEndpoint::IPEndpoint()
+	IPEndpoint::IPEndpoint() : ip{}
 	{
 	}
 	IPEndpoint::IPEndpoint(const std::string& ip)
@@ -26,6 +26,9 @@ namespace swl
 	IPEndpoint::IPEndpoint(const in_addr& addr)
 	{
 		ip = addr;
+	}
+	IPEndpoint::~IPEndpoint()
+	{
 	}
 	IPEndpoint IPEndpoint::getLocalAddress()
 	{
@@ -54,12 +57,12 @@ namespace swl
 
 		return localAddress;
 	}
-	sockaddr_in IPEndpoint::createAddress(const uint32_t& ip, const uint16_t& port)
+	sockaddr_in IPEndpoint::CreateAddress(const uint32_t& ip, const uint16_t& port)
 	{
 		sockaddr_in addr{};
 		addr.sin_family = AF_INET;
 		addr.sin_addr.S_un.S_addr = ip;
-		addr.sin_port = port;
+		addr.sin_port = htons(port);
 		return addr;
 	}
 	bool IPEndpoint::operator==(const IPEndpoint& ip)

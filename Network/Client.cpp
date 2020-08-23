@@ -2,7 +2,11 @@
 
 namespace swl
 {
-	Client::Client()
+	Client::Client() : packets{}
+	{
+		connection = false;
+	}
+	Client::~Client()
 	{
 
 	}
@@ -22,13 +26,20 @@ namespace swl
 	{
 		return connection;
 	}
-	TCPClient::TCPClient()
+	TCPClient::TCPClient() : socket{}
 	{
-
+		
+	}
+	TCPClient::~TCPClient()
+	{
+		connection = false;
+		socket.close();
 	}
 	Socket::Status TCPClient::connect(const IPEndpoint& ip, const uint16_t& port)
 	{
 		if (connection) return Socket::Done;
+		if (socket.getHandle() == INVALID_SOCKET)
+			socket = TCPSocket();
 		if (socket.connect(ip, port))
 			return Socket::Error;
 		connection = true;
@@ -65,17 +76,28 @@ namespace swl
 		return socket;
 	}
 
-	UDPClient::UDPClient()
+	UDPClient::UDPClient() : socket{}
 	{
 
+	}
+	UDPClient::~UDPClient()
+	{
+		connection = false;
+		socket.close();
 	}
 	Socket::Status UDPClient::connect(const IPEndpoint& ip, const uint16_t& port)
 	{
 		if (connection) return Socket::Done;
-		socket.bind(IPEndpoint::getLocalAddress(), port+1);
+		if (socket.getHandle() == INVALID_SOCKET)
+			socket = UDPSocket();
+		socket.bind(IPEndpoint::getLocalAddress(), 0);
 		connection = true;
 		this->ip = ip;
 		this->port = port;
+		uint32_t conn = 0x7FFFFFFF;
+		Packet pconn;
+		socket.sendAll((void*)&conn, 4, this->ip, this->port);
+		socket.send(pconn, this->ip, this->port);
 		std::thread([&]() {
 			Packet packet;
 			uint32_t id{};
@@ -86,7 +108,7 @@ namespace swl
 			{
 				status = socket.receiveAll((void*)&id, 4, ip, port);
 				status = socket.receive(packet, ip, port);
-				if (status == Socket::Disconnected)
+				if (status != Socket::Done)
 				{
 					connection = false;
 					break;
@@ -98,6 +120,8 @@ namespace swl
 	}
 	void UDPClient::disconnect()
 	{
+		swl::Packet packet;
+		send(packet, 0x7FFFFFFF);
 		connection = false;
 		socket.close();
 	}

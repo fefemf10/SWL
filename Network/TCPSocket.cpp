@@ -2,12 +2,17 @@
 
 namespace swl
 {
-	TCPSocket::TCPSocket() : Socket{ socket(AF_INET, SOCK_STREAM, IPPROTO_TCP) }
+	TCPSocket::TCPSocket() : Socket(socket(AF_INET, SOCK_STREAM, IPPROTO_TCP))
 	{
 		char value = 1;
 		setsockopt(handle, IPPROTO_TCP, TCP_NODELAY, &value, 1);
 	}
 	TCPSocket::TCPSocket(SOCKET& handle) : Socket{ handle }
+	{
+		char value = 1;
+		setsockopt(handle, IPPROTO_TCP, TCP_NODELAY, &value, 1);
+	}
+	TCPSocket::~TCPSocket()
 	{
 
 	}
@@ -21,16 +26,16 @@ namespace swl
 	{
 		sockaddr_in addr{};
 		int len = sizeof(addr);
-		SOCKET acceptedHandle = ::accept(handle, (sockaddr*)(&addr), &len);
+		SOCKET acceptedHandle = ::WSAAccept(handle, (sockaddr*)(&addr), &len, nullptr, NULL);
 		if (acceptedHandle == INVALID_SOCKET)
 			return getErrorStatus();
-
+		
 		socket = TCPSocket(acceptedHandle);
 		return Status::Done;
 	}
-	Socket::Status TCPSocket::connect(const IPEndpoint& endpoint, const uint16_t& port)
+	Socket::Status TCPSocket::connect(const IPEndpoint& ip, const uint16_t& port)
 	{
-		if (::connect(handle, (sockaddr*)(&IPEndpoint::createAddress(endpoint.toInteger(), port)), sizeof(sockaddr_in)))
+		if (::WSAConnect(handle, (sockaddr*)&IPEndpoint::CreateAddress(ip.toInteger(), port), sizeof(sockaddr_in), nullptr, nullptr, nullptr, nullptr))
 			return getErrorStatus();
 		return Status::Done;
 	}

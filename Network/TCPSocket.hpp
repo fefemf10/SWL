@@ -10,9 +10,10 @@ namespace swl
 	public:
 		TCPSocket();
 		TCPSocket(SOCKET& handle);
+		~TCPSocket();
 		Status listen(const int& backlog = SOMAXCONN);
 		Status accept(TCPSocket& socket);
-		Status connect(const IPEndpoint& endpoint, const uint16_t& port);
+		Status connect(const IPEndpoint& ip, const uint16_t& port);
 		Status send(const void* data, const uint32_t& numberBytes, uint32_t& bytesSent);
 		Status sendAll(const void* data, const uint32_t& numberBytes);
 		Status receive(void* destination, const uint32_t& numberBytes, uint32_t& bytesRecived);

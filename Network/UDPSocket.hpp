@@ -7,6 +7,7 @@ namespace swl
 	{
 	public:
 		UDPSocket();
+		~UDPSocket();
 		Status send(const void* data, const uint32_t& numberBytes, uint32_t& bytesSent, const IPEndpoint& ip, const uint16_t& port);
 		Status sendAll(const void* data, const uint32_t& numberBytes, const IPEndpoint& ip, const uint16_t& port);
 		Status receive(void* destination, const uint32_t& numberBytes, uint32_t& bytesRecived, IPEndpoint& ip, uint16_t& port);

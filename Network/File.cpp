@@ -6,7 +6,8 @@
 namespace swl
 {
 	File::File() : filePath{}, fileName {}, data{}
-	{}
+	{
+	}
 	File::File(std::string path)
 	{
 		size_t length = 0;

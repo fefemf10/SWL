@@ -23,7 +23,7 @@ namespace swl
 		};
 		Socket(SOCKET handle);
 		virtual ~Socket();
-		Status bind(const IPEndpoint& endpoint, const uint16_t& port);
+		Status bind(const IPEndpoint& ip, const uint16_t& port);
 		Status close();
 		SOCKET getHandle();
 		Status setBlocking(const bool& blocking);

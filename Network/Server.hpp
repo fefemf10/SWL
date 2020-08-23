@@ -1,8 +1,6 @@
 #pragma once
 #include <cstdint>
-#include <cstdint>
 #include <vector>
-#include <map>
 #include <tuple>
 #include "TCPSocket.hpp"
 #include "UDPSocket.hpp"
@@ -15,19 +13,24 @@ namespace swl
 	{
 	public:
 		Server();
+		virtual ~Server();
 		virtual void run(const IPEndpoint& ip, uint16_t port) = 0;
 		bool isWork() const;
 		virtual void stop() = 0;
 	protected:
+		std::thread main;
 		bool work;
 		SocketSelector selector;
+
 	};
 
 	class TCPServer : public Server
 	{
 	public:
 		TCPServer();
+		~TCPServer() override;
 		void run(const IPEndpoint& ip, uint16_t port) override;
+		void core();
 		void stop() override;
 	private:
 		TCPSocket socket;
@@ -38,6 +41,7 @@ namespace swl
 	{
 	public:
 		UDPServer();
+		~UDPServer() override;
 		void run(const IPEndpoint& ip, uint16_t port) override;
 		void stop() override;
 	private:
