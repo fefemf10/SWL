@@ -11,12 +11,11 @@ namespace swl
 	class Packet
 	{
 	public:
-		enum
+		enum Type
 		{
 			Chat,
-			FileBegin,
-			FilePart,
-			FileEnd,
+			File,
+			Audio
 		};
 		Packet();
 		virtual ~Packet();
@@ -35,8 +34,8 @@ namespace swl
 		Packet& operator >> (std::vector<T>& data);
 		Packet& operator << (const std::string& data);
 		Packet& operator >> (std::string& data);
-		Packet& operator << (File& file);
-		Packet& operator >> (File& file);
+		Packet& operator << (swl::File& file);
+		Packet& operator >> (swl::File& file);
 	protected:
 		friend TCPSocket;
 		friend UDPSocket;

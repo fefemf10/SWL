@@ -11,7 +11,8 @@ namespace swl
 	}
 	Socket::Status Socket::bind(const IPEndpoint& ip, const uint16_t& port)
 	{
-		if (::bind(handle, (sockaddr*)&IPEndpoint::CreateAddress(ip.toInteger(), port), sizeof(sockaddr_in)))
+		sockaddr_in addr = IPEndpoint::CreateAddress(ip.toInteger(), port);
+		if (::bind(handle, (sockaddr*)&addr, sizeof(sockaddr_in)))
 			return Status::Error;
 		return Status::Done;
 	}

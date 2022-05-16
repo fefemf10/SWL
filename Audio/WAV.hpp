@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <fstream>
+#include "AudioBuffer.hpp"
 
 namespace swl
 {
@@ -11,12 +12,11 @@ namespace swl
 		~WAV();
 		void close();
 		void writeStruct();
-		void copyData(const char* data, const uint32_t& bytes, bool& done);
-		void loadData(char* data, const uint32_t& bytes, bool& done);
-		//short extraFormatBytes = AudioIn::reverse(0);
-		//data
+		void copyData(const char* data, const uint32_t& bytes);
+		void loadData(AudioBuffer& buffer, const uint32_t& bytes = 0);
+
 		uint32_t samplingRate;
-		uint8_t bitsPerSample;
+		uint16_t bitsPerSample;
 		uint8_t channels;
 	private:
 		bool read;
@@ -24,5 +24,6 @@ namespace swl
 		uint32_t chunkSize;
 		uint32_t subchunk2Size;
 		uint32_t readPos;
+		uint32_t writePos;
 	};
 }

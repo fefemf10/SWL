@@ -2,7 +2,7 @@
 
 namespace swl
 {
-	Client::Client() : packets{}
+	Client::Client() : packets{}, packetId{}
 	{
 		connection = false;
 	}
@@ -10,9 +10,14 @@ namespace swl
 	{
 
 	}
-	Packet Client::getLastPacket(uint32_t& id)
+	void Client::setSettingsSend(const bool& encrypt, const bool& zip)
 	{
-		Packet packet;
+		this->encrypt = encrypt;
+		this->zip = zip;
+	}
+	ZipPacket Client::getLastPacket(uint32_t& id)
+	{
+		ZipPacket packet;
 		id = 0;
 		if (!this->packets.empty())
 		{
@@ -44,7 +49,7 @@ namespace swl
 			return Socket::Error;
 		connection = true;
 		std::thread([&]() {
-			Packet packet;
+			ZipPacket packet;
 			uint32_t id{};
 			Socket::Status status;
 			while (connection)
@@ -66,7 +71,7 @@ namespace swl
 		connection = false;
 		socket.close();
 	}
-	void TCPClient::send(Packet& packet, uint32_t id)
+	void TCPClient::send(ZipPacket& packet, uint32_t id)
 	{
 		socket.sendAll((const void*)&id, 4);
 		socket.send(packet);
@@ -95,11 +100,11 @@ namespace swl
 		this->ip = ip;
 		this->port = port;
 		uint32_t conn = 0x7FFFFFFF;
-		Packet pconn;
+		ZipPacket pconn;
 		socket.sendAll((void*)&conn, 4, this->ip, this->port);
 		socket.send(pconn, this->ip, this->port);
 		std::thread([&]() {
-			Packet packet;
+			ZipPacket packet;
 			uint32_t id{};
 			IPEndpoint ip;
 			uint16_t port;
@@ -120,12 +125,12 @@ namespace swl
 	}
 	void UDPClient::disconnect()
 	{
-		swl::Packet packet;
+		swl::ZipPacket packet;
 		send(packet, 0x7FFFFFFF);
 		connection = false;
 		socket.close();
 	}
-	void UDPClient::send(Packet& packet, uint32_t id)
+	void UDPClient::send(ZipPacket& packet, uint32_t id)
 	{
 		socket.sendAll((const void*)&id, 4, ip, port);
 		socket.send(packet, ip, port);

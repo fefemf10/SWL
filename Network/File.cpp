@@ -41,7 +41,7 @@ namespace swl
 
 	uint32_t File::getDataSize()
 	{
-		return this->data.size();
+		return static_cast<uint32_t>(this->data.size());
 	}
 
 	char* File::getFileData()

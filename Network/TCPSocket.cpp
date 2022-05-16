@@ -35,7 +35,8 @@ namespace swl
 	}
 	Socket::Status TCPSocket::connect(const IPEndpoint& ip, const uint16_t& port)
 	{
-		if (::WSAConnect(handle, (sockaddr*)&IPEndpoint::CreateAddress(ip.toInteger(), port), sizeof(sockaddr_in), nullptr, nullptr, nullptr, nullptr))
+		sockaddr_in addr = IPEndpoint::CreateAddress(ip.toInteger(), port);
+		if (::WSAConnect(handle, (sockaddr*)&addr, sizeof(sockaddr_in), nullptr, nullptr, nullptr, nullptr))
 			return getErrorStatus();
 		return Status::Done;
 	}

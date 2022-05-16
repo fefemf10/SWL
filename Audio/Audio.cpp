@@ -2,107 +2,113 @@
 
 namespace swl
 {
-	Audio::Audio(const uint32_t& samplingRate, const uint8_t bitsPerSample, const uint8_t& channels) : buffer(1, samplingRate, bitsPerSample)
+	Audio::Audio(const uint32_t& samplingRate, const uint8_t bitsPerSample, const uint8_t& channels, AudioBuffer& buffer) : buffer(buffer), waveInBuffer1{}, waveInBuffer2{}, waveOutBuffer1{}, waveOutBuffer2{}
 	{
-		/*format->wFormatTag = WAVE_FORMAT_PCM;
-		format->nChannels = channels;
-		format->nSamplesPerSec = samplingRate;
-		format->wBitsPerSample = bitsPerSample;
-		format->nBlockAlign = format->nChannels * (format->wBitsPerSample / 8);
-		format->nAvgBytesPerSec = format->nSamplesPerSec * format->nBlockAlign;
-		format->cbSize = 0;*/
+		format.wFormatTag = WAVE_FORMAT_PCM;
+		format.nChannels = channels;
+		format.nSamplesPerSec = samplingRate;
+		format.wBitsPerSample = bitsPerSample;
+		format.nBlockAlign = format.nChannels * (format.wBitsPerSample / 8);
+		format.nAvgBytesPerSec = format.nSamplesPerSec * format.nBlockAlign;
+		format.cbSize = 0;
+
+		waveInBuffer1.lpData = new char[format.nSamplesPerSec * 1 * 2];
+		waveInBuffer1.dwBufferLength = format.nSamplesPerSec * 1 * 2;
+
+		waveInBuffer2.lpData = new char[format.nSamplesPerSec * 1 * 2];
+		waveInBuffer2.dwBufferLength = format.nSamplesPerSec * 1 * 2;
+
+		waveOutBuffer1.lpData = new char[format.nSamplesPerSec * 1 * 2];
+		waveOutBuffer1.dwBufferLength = format.nSamplesPerSec * 1 * 2;
+
+		waveOutBuffer2.lpData = new char[format.nSamplesPerSec * 1 * 2];
+		waveOutBuffer2.dwBufferLength = format.nSamplesPerSec * 1 * 2;
 	}
 	void Audio::record()
 	{
-		//nanosec
-		REFERENCE_TIME hnsRequestedDuration = 10000000;
-		REFERENCE_TIME hnsActualDuration;
-		UINT32 bufferFrameCount;
-		UINT32 numFramesAvailable;
-		UINT32 packetLength = 0;
-		BOOL bDone = FALSE;
-		BYTE* pData;
-		DWORD flags;
-
-		CoCreateInstance(CLSID_MMDeviceEnumerator, nullptr, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void**)&pEnumerator);
-		pEnumerator->GetDefaultAudioEndpoint(eCapture, eConsole, &pDevice);
-		pDevice->Activate(IID_IAudioClient, CLSCTX_ALL, nullptr, (void**)&pAudioClient);
-		pAudioClient->GetMixFormat(&format);
-		pAudioClient->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, hnsRequestedDuration, 0, format, nullptr);
-		// Get the size of the allocated buffer.
-		pAudioClient->GetBufferSize(&bufferFrameCount);
-		pAudioClient->GetService(IID_IAudioCaptureClient, (void**)&pCaptureClient);
-		// Calculate the actual duration of the allocated buffer.
-		hnsActualDuration = (double)10000000 * bufferFrameCount / format->nSamplesPerSec;
-		pAudioClient->Start();  // Start recording.
-		// Each loop fills about half of the shared buffer.
-		while (bDone == FALSE)
-		{
-			// Sleep for half the buffer duration.
-			Sleep(hnsActualDuration / 10000 / 2);
-			pCaptureClient->GetNextPacketSize(&packetLength);
-			while (packetLength != 0)
-			{
-				// Get the available data in the shared buffer.
-				pCaptureClient->GetBuffer(&pData, &numFramesAvailable, &flags, NULL, NULL);
-				if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
-				{
-					pData = nullptr;  // Tell CopyData to write silence.
-				}
-				// Copy the available capture data to the audio sink.
-				buffer.copyData(pData, numFramesAvailable, bDone);
-				pCaptureClient->ReleaseBuffer(numFramesAvailable);
-				pCaptureClient->GetNextPacketSize(&packetLength);
-			}
-		}
-		pAudioClient->Stop();
+		waveInOpen(&waveIn, WAVE_MAPPER, &format, (DWORD_PTR)&Audio::recordCallback, (DWORD_PTR)this, CALLBACK_FUNCTION);
+		waveInPrepareHeader(waveIn, &waveInBuffer1, sizeof(wavehdr_tag));
+		waveInPrepareHeader(waveIn, &waveInBuffer2, sizeof(wavehdr_tag));
+		waveInAddBuffer(waveIn, &waveInBuffer1, sizeof(wavehdr_tag));
+		recording = true;
+		waveInStart(waveIn);
 	}
-	void Audio::playback()
+	void Audio::recordStop()
 	{
-		REFERENCE_TIME hnsRequestedDuration = 10000000;
-		REFERENCE_TIME hnsActualDuration;
-		UINT32 bufferFrameCount;
-		UINT32 numFramesAvailable;
-		UINT32 numFramesPadding;
-		BYTE* pData;
-		DWORD flags = 0;
+		recording = false;
+		waveInStop(waveIn);
+		waveInUnprepareHeader(waveIn, &waveInBuffer1, sizeof(wavehdr_tag));
+		waveInUnprepareHeader(waveIn, &waveInBuffer2, sizeof(wavehdr_tag));
+		waveInClose(waveIn);
+	}
+	void Audio::play()
+	{
+		waveOutOpen(&waveOut, WAVE_MAPPER, &format, (DWORD_PTR)&Audio::playCallback, (DWORD_PTR)this, CALLBACK_FUNCTION);
+		waveOutPrepareHeader(waveOut, &waveOutBuffer1, sizeof(wavehdr_tag));
+		waveOutPrepareHeader(waveOut, &waveOutBuffer2, sizeof(wavehdr_tag));
+		buffer.out(waveOutBuffer1.lpData, samplingRate * 1 * 2);
+		playing = true;
+		Sleep(10);
+		waveOutWrite(waveOut, &waveOutBuffer1, sizeof(wavehdr_tag));
+		waveOutRestart(waveOut);
+	}
+	void Audio::playStop()
+	{
+		playing = false;
+		waveOutReset(waveOut);
+		waveOutUnprepareHeader(waveOut, &waveOutBuffer1, sizeof(wavehdr_tag));
+		waveOutUnprepareHeader(waveOut, &waveOutBuffer2, sizeof(wavehdr_tag));
+		waveOutClose(waveOut);
+	}
+	void Audio::recordCallback(HWAVEIN hwi, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2)
+	{
+		Audio* self = (Audio*)(dwInstance);
+		wavehdr_tag* wavehdr = NULL;
 
-		CoCreateInstance(CLSID_MMDeviceEnumerator, nullptr, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void**)&pEnumerator);
-		pEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &pDevice);
-		pDevice->Activate(IID_IAudioClient, CLSCTX_ALL, nullptr, (void**)&pAudioClient);
-		pAudioClient->GetMixFormat(&format);
-		pAudioClient->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, hnsRequestedDuration, 0, format, nullptr);
-		// Get the actual size of the allocated buffer.
-		pAudioClient->GetBufferSize(&bufferFrameCount);
-		pAudioClient->GetService(IID_IAudioRenderClient, (void**)&pRenderClient);
-		// Grab the entire buffer for the initial fill operation.
-		pRenderClient->GetBuffer(bufferFrameCount, &pData);
-		// Load the initial data into the shared buffer.
-		buffer.loadData(pData, bufferFrameCount, flags);
-		pRenderClient->ReleaseBuffer(bufferFrameCount, flags);
-		// Calculate the actual duration of the allocated buffer.
-		hnsActualDuration = (double)10000000 * bufferFrameCount / format->nSamplesPerSec;
-		pAudioClient->Start();
-		// Each loop fills about half of the shared buffer.
-		while (flags != AUDCLNT_BUFFERFLAGS_SILENT)
+		switch (uMsg)
 		{
-			// Sleep for half the buffer duration.
-			Sleep((DWORD)(hnsActualDuration / 10000 / 2));
-			// See how much buffer space is available.
-			pAudioClient->GetCurrentPadding(&numFramesPadding);
-			numFramesAvailable = bufferFrameCount - numFramesPadding;
-			// Grab all the available space in the shared buffer.
-			pRenderClient->GetBuffer(numFramesAvailable, &pData);
-			// Get next 1/2-second of data from the audio source.
-			buffer.loadData(pData, numFramesAvailable, flags);
-			pRenderClient->ReleaseBuffer(numFramesAvailable, flags);
-			Sleep((DWORD)(hnsActualDuration / 10000 / 2));
-			pAudioClient->Stop();
-			if (pEnumerator != nullptr)
+		case WIM_DATA:
+			wavehdr = (WAVEHDR*)dwParam1;
+			if (wavehdr->dwFlags & WHDR_DONE)
 			{
-				pEnumerator->Release();
-				pEnumerator = nullptr;
+				if (self->recording)
+				{
+					if (&self->waveInBuffer1 == wavehdr)
+						waveInAddBuffer(hwi, &self->waveInBuffer2, sizeof(wavehdr_tag));
+					else
+						waveInAddBuffer(hwi, &self->waveInBuffer1, sizeof(wavehdr_tag));
+				}
+				self->buffer.in(wavehdr->lpData, wavehdr->dwBufferLength);
 			}
+			break;
+		}
+	}
+	void Audio::playCallback(HWAVEOUT hwo, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2)
+	{
+		Audio* self = (Audio*)(dwInstance);
+		wavehdr_tag* wavehdr = NULL;
+
+		switch (uMsg)
+		{
+		case WOM_DONE:
+			wavehdr = (WAVEHDR*)dwParam1;
+			if (wavehdr->dwFlags & WHDR_DONE)
+			{
+				if (self->playing)
+				{
+					if (&self->waveOutBuffer1 == wavehdr)
+					{
+						self->buffer.out(self->waveOutBuffer2.lpData, wavehdr->dwBufferLength);
+						waveOutWrite(self->waveOut, &self->waveOutBuffer2, sizeof(wavehdr_tag));
+					}
+					else
+					{
+						self->buffer.out(self->waveOutBuffer1.lpData, wavehdr->dwBufferLength);
+						waveOutWrite(self->waveOut, &self->waveOutBuffer1, sizeof(wavehdr_tag));
+					}
+				}
+			}
+			break;
 		}
 	}
 }

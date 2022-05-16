@@ -34,7 +34,7 @@ namespace swl
 	Packet& Packet::operator<<(const std::string& data)
 	{
 		*this << (uint32_t)data.size();
-		append(data.data(), data.size());
+		append(data.data(), static_cast<uint32_t>(data.size()));
 		return *this;
 	}
 	Packet& Packet::operator>>(std::string& data)
@@ -52,14 +52,14 @@ namespace swl
 		}
 		return *this;
 	}
-	Packet& Packet::operator<<(File& file)
+	Packet& Packet::operator<<(swl::File& file)
 	{
 		*this << file.getFileName();
 		*this << file.getDataSize();
 		this->append(file.getFileData(), file.getDataSize());
 		return *this;
 	}
-	Packet& Packet::operator>>(File& file)
+	Packet& Packet::operator>>(swl::File& file)
 	{
 		std::string tempName;
 		std::vector<char> tempData;

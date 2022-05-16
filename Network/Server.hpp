@@ -6,6 +6,7 @@
 #include "UDPSocket.hpp"
 #include "Client.hpp"
 #include "SocketSelector.hpp"
+#include "ZipPacket.hpp"
 
 namespace swl
 {

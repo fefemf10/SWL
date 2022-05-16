@@ -13,7 +13,7 @@ namespace swl
 	{
 		SOCKET handle = socket.getHandle();
 		if (handle != INVALID_SOCKET)
-			sockets.push_back(pollfd{ handle, POLLRDNORM | POLLWRNORM | POLLERR | POLLHUP });
+			sockets.push_back(pollfd{ handle, POLLRDNORM});
 	}
 	void SocketSelector::remove(Socket& socket)
 	{
@@ -46,12 +46,10 @@ namespace swl
 				{
 					if (socket.revents & POLLRDNORM)
 						return Status::Read;
-					else if (socket.revents & POLLWRNORM)
-						return Status::Write;
-					else if (socket.revents & POLLERR)
-						return Status::Error;
 					else if (socket.revents & POLLHUP)
 						return Status::Disconnected;
+					else if (socket.revents & POLLERR)
+						return Status::Error;
 				}
 			}
 		}

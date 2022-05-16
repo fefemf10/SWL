@@ -5,7 +5,7 @@
 #include "IPEndpoint.hpp"
 #include "TCPSocket.hpp"
 #include "UDPSocket.hpp"
-#include "Packet.hpp"
+#include "ZipPacket.hpp"
 
 namespace swl
 {
@@ -16,12 +16,16 @@ namespace swl
 		virtual ~Client();
 		virtual Socket::Status connect(const IPEndpoint& ip, const uint16_t& port) = 0;
 		virtual void disconnect() = 0;
-		virtual void send(Packet& packet, uint32_t id) = 0;
-		Packet getLastPacket(uint32_t& id);
+		virtual void send(ZipPacket& packet, uint32_t id) = 0;
+		void setSettingsSend(const bool& encrypt, const bool& zip);
+		ZipPacket getLastPacket(uint32_t& id);
 		bool isConnected() const;
 	protected:
+		bool encrypt = false;
+		bool zip = false;
 		bool connection;
-		std::queue<std::pair<Packet, uint32_t>> packets;
+		uint32_t packetId;
+		std::queue<std::pair<ZipPacket, uint32_t>> packets;
 	};
 	class TCPClient : public Client
 	{
@@ -30,7 +34,7 @@ namespace swl
 		~TCPClient() override;
 		Socket::Status connect(const IPEndpoint& ip, const uint16_t& port) override;
 		void disconnect() override;
-		void send(Packet& packet, uint32_t id) override;
+		void send(ZipPacket& packet, uint32_t id) override;
 		TCPSocket& getSocket();
 	private:
 		TCPSocket socket;
@@ -42,7 +46,7 @@ namespace swl
 		~UDPClient() override;
 		Socket::Status connect(const IPEndpoint& ip, const uint16_t& port) override;
 		void disconnect() override;
-		void send(Packet& packet, uint32_t id) override;
+		void send(ZipPacket& packet, uint32_t id) override;
 		UDPSocket& getSocket();
 	private:
 		IPEndpoint ip;

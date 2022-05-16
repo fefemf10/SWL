@@ -12,7 +12,7 @@ namespace swl
 		format.nBlockAlign = channels * bitsPerSample / 8;
 		format.cbSize = 0;
 		using std::placeholders::_1;
-		result = waveOutOpen(&handle, WAVE_MAPPER, &format, (DWORD_PTR)&AudioOut::startPlay, CALLBACK_FUNCTION, WAVE_FORMAT_DIRECT);
+		result = waveOutOpen(&handle, WAVE_MAPPER, &format, (DWORD_PTR)&AudioOut::startPlay, 0, CALLBACK_FUNCTION);
 		waveOutPrepareHeader(handle, buffer1.getWaveBuffer(), sizeof(wavehdr_tag));
 		waveOutPrepareHeader(handle, buffer2.getWaveBuffer(), sizeof(wavehdr_tag));
 		bufferIndex = 1;

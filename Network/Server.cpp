@@ -32,7 +32,7 @@ namespace swl
 		main = std::thread([&]()
 			{
 				uint32_t id{};
-				Packet packet;
+				ZipPacket packet;
 				uint32_t client_id = 1;
 				Socket::Status status;
 				while (work)
@@ -66,18 +66,15 @@ namespace swl
 							for (auto& client : clients)
 							{
 								uint32_t idSender = client.second & 0x7FFFFFFF;
-								if (selector.isReady(client.first) == SocketSelector::Disconnected)
+								SocketSelector::Status sstatus = selector.isReady(client.first);
+								if (sstatus == SocketSelector::Disconnected || sstatus == SocketSelector::Error)
 								{
 									selector.remove(client.first);
 									client.first.close();
 									client.second = idSender;
 									continue;
 								}
-							}
-							for (auto& client : clients)
-							{
-								uint32_t idSender = client.second & 0x7FFFFFFF;
-								if (client.second >> 31 && selector.isReady(client.first) == SocketSelector::Read)
+								else if (client.second >> 31 && selector.isReady(client.first) == SocketSelector::Read)
 								{
 									status = client.first.receiveAll((void*)&id, 4);
 									status = client.first.receive(packet);
@@ -148,7 +145,7 @@ namespace swl
 			{
 				uint32_t id{};
 				uint32_t client_id = 1;
-				Packet packet;
+				ZipPacket packet;
 				IPEndpoint ip;
 				uint16_t port;
 				Socket::Status status;
