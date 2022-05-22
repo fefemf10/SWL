@@ -2,8 +2,6 @@
 #include <random>
 #include <fstream>
 #include "Neuron.hpp"
-#include "Matrix.hpp"
-#include "Vector.hpp"
 
 template <typename T>
 class Neuralnet
@@ -17,19 +15,16 @@ public:
 	void loadWeights(const std::string& filepath);
 	void saveWeights(const std::string& filepath);
 	void forwardFeed();
-	void backPropagation(T learnRate = 0.1);
-	void findError(const std::vector<T>& rightAnswer, T alpha = 1.0);
+	void backPropagation(const std::vector<T>& rightAnswer, T learnRate = 0.1);
 	//std::vector<std::vector<Neuron>> neurons; //[layers][neuron]
-	std::vector<Matrix<T>> weights;
-	std::vector<Vector<T>> values;
-	std::vector<Vector<T>> errors;
+	std::vector<std::vector<T>> weights;
+	std::vector<std::vector<T>> values;
+	std::vector<std::vector<T>> errors;
 	float error;
 	uint8_t countLayers;
 private:
 	T activation(T value);
-	Vector<T> activation(const Vector<T>& values);
 	T derivative(T value);
-	Vector<T> derivative(const Vector<T>& values);
 };
 
 template<typename T>
@@ -37,26 +32,39 @@ inline Neuralnet<T>::Neuralnet(std::vector<uint16_t> countNeurons) : countLayers
 {
 	for (size_t i = 0; i < countLayers; ++i)
 	{
-		values.push_back(Vector<T>(countNeurons[i]));
-		errors.push_back(Vector<T>(countNeurons[i]));
+		values.push_back(std::vector<T>(countNeurons[i]));
+		errors.push_back(std::vector<T>(countNeurons[i]));
 	}
 	for (size_t i = 0; i < countLayers - 1; ++i)
 	{
-		weights.push_back(Matrix<T>(countNeurons[i], countNeurons[i + 1]));
+		weights.push_back(std::vector<T>(countNeurons[i] * countNeurons[i + 1]));
 	}
 }
 
 template<typename T>
 inline void Neuralnet<T>::fullReset()
 {
+	for (size_t i = 0; i < countLayers; ++i)
+	{
+		const size_t countNeurons = values[i].size();
+		for (size_t j = 0; j < countNeurons; j++)
+		{
+			values[i][j] = 0.0;
+			errors[i][j] = 0.0;
+		}
+	}
 	for (size_t i = 0; i < countLayers - 1; ++i)
 	{
-		values[i] = 0.0;
-		errors[i] = 0.0;
-		weights[i] = 0.0;
+		const size_t n = values[i].size();
+		const size_t m = values[i + 1].size();
+		for (size_t j = 0; j < n; j++)
+		{
+			for (size_t k = 0; k < m; k++)
+			{
+				weights[i][j * m + k] = 0.0;
+			}
+		}
 	}
-	values[countLayers - 1] = 0.0;
-	errors[countLayers - 1] = 0.0;
 }
 
 template<typename T>
@@ -71,13 +79,15 @@ inline void Neuralnet<T>::setRandomWeights()
 	std::random_device rd;
 	std::mt19937 gen(rd());
 	std::uniform_real_distribution<T> distribution(0.0, 1.0);
-	for (size_t i = 0; i < countLayers - 1; ++i)//-1 last layer
+	for (size_t i = 0; i < countLayers - 1; ++i)
 	{
-		for (size_t j = 0; j < weights[i].row; ++j)
+		const size_t n = values[i].size();
+		const size_t m = values[i + 1].size();
+		for (size_t j = 0; j < n; ++j)
 		{
-			for (size_t k = 0; k < weights[i].column; ++k)
+			for (size_t k = 0; k < m; ++k)
 			{
-				weights[i][j * weights[i].column + k] = distribution(gen);
+				weights[i][j * m + k] = distribution(gen);
 			}
 		}
 	}
@@ -86,34 +96,52 @@ inline void Neuralnet<T>::setRandomWeights()
 template<typename T>
 inline void Neuralnet<T>::forwardFeed()
 {
-	for (int i = 1; i < countLayers; ++i)
+	for (int i = 0; i < countLayers - 1; ++i)
 	{
-		values[i] = activation(values[i - 1] * weights[i - 1]);
+		const size_t n = values[i].size();
+		const size_t m = values[i + 1].size();
+		for (size_t j = 0; j < m; j++)
+		{
+			values[i + 1][j] = 0.0;
+		}
+		for (size_t j = 0; j < n; j++)
+		{
+			for (size_t k = 0; k < m; k++)
+			{
+				values[i + 1][k] += (weights[i][j * m + k] * values[i][j]);
+ 			}
+		}
+		for (size_t k = 0; k < m; k++)
+		{
+			values[i + 1][k] = activation(values[i + 1][k]);
+		}
 	}
 }
 
 template<typename T>
-inline void Neuralnet<T>::backPropagation(T learnRate)
-{
-	for (int i = 0; i < countLayers - 1; ++i)//-1 last layer
-	{
-		weights[i] = weights[i] + ((Matrix(errors[i + 1], false) * Matrix(values[i], true)) * -learnRate);
-	}
-}
-
-template<typename T>
-inline void Neuralnet<T>::findError(const std::vector<T>& rightAnswer, T alpha)
+inline void Neuralnet<T>::backPropagation(const std::vector<T>& rightAnswer, T learnRate)
 {
 	error = 0.0;
-	size_t countNeurons = values[countLayers - 1].size;
-	errors[countLayers - 1] = (Vector<T>(rightAnswer) - values[countLayers - 1]) * derivative(values[countLayers - 1]);
-	for (size_t i = 0; i < countNeurons; ++i)
+	size_t countNeurons = values[countLayers - 1].size();
+	for (size_t i = 0; i < countNeurons; i++)
 	{
-		error += std::pow(rightAnswer[i] - values[countLayers - 1][i], 2) / countNeurons;
+		errors[countLayers - 1][i] = values[countLayers - 1][i] - rightAnswer[i];
+		error += errors[countLayers - 1][i] * errors[countLayers - 1][i];
 	}
+	error /= countNeurons;
 	for (int i = countLayers - 2; i >= 0; --i)
 	{
-		errors[i] = (weights[i] * errors[i+1]) * derivative(values[i]);
+		const size_t n = values[i].size();
+		const size_t m = values[i+1].size();
+		for (size_t k = 0; k < m; k++)
+		{
+			const T weightsDelta = errors[i + 1][k] * derivative(values[i + 1][k]);
+			for (size_t j = 0; j < n; j++)
+			{
+				weights[i][j * m + k] -= values[i][j] * weightsDelta * learnRate;
+				errors[i][j] = weights[i][j * m + k] * weightsDelta;
+			}
+		}
 	}
 }
 
@@ -127,17 +155,6 @@ inline T Neuralnet<T>::activation(T value)
 }
 
 template<typename T>
-inline Vector<T> Neuralnet<T>::activation(const Vector<T>& values)
-{
-	Vector<T> output(values.size);
-	for (size_t i = 0; i < values.size; ++i)
-	{
-		output[i] = activation(values[i]);
-	}
-	return output;
-}
-
-template<typename T>
 inline T Neuralnet<T>::derivative(T value)
 {
 	return value * (1.0 - value);
@@ -147,23 +164,12 @@ inline T Neuralnet<T>::derivative(T value)
 }
 
 template<typename T>
-inline Vector<T> Neuralnet<T>::derivative(const Vector<T>& values)
-{
-	Vector<T> deriv(values.size);
-	for (size_t i = 0; i < values.size; ++i)
-	{
-		deriv[i] = derivative(values[i]);
-	}
-	return deriv;
-}
-
-template<typename T>
 inline void Neuralnet<T>::loadWeights(const std::string& filepath)
 {
 	std::ifstream file(filepath, std::ios::binary);
 	for (size_t i = 0; i < countLayers - 1; ++i)//-1 last layer
 	{
-		file.read(reinterpret_cast<char*>(&weights[i][0]), weights[i].row * weights[i].column * sizeof(T));
+		file.read(reinterpret_cast<char*>(&weights[i][0]), values[i].size() * values[i+1].size()  * sizeof(T));
 	}
 	file.close();
 }
@@ -174,7 +180,7 @@ inline void Neuralnet<T>::saveWeights(const std::string& filepath)
 	std::ofstream file(filepath, std::ios::binary);
 	for (size_t i = 0; i < countLayers - 1; ++i)//-1 last layer
 	{
-		file.write(reinterpret_cast<const char*>(&weights[i][0]), weights[i].row * weights[i].column * sizeof(T));
+		file.write(reinterpret_cast<const char*>(&weights[i][0]), values[i].size() * values[i + 1].size() * sizeof(T));
 	}
 	file.close();
 }

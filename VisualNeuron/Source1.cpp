@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <algorithm>
 #include <random>
 #include <thread>
 #include <chrono>
@@ -51,17 +52,18 @@ void message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GL
 		}
 	}();
 
-	Logger::log(std::string(src_str) + ", " + std::string(type_str) + ", " + std::string(severity_str) + ", " + std::to_string(id) + ": " + std::string(message));
+	Logger::debug(std::string(src_str) + ", " + std::string(type_str) + ", " + std::string(severity_str) + ", " + std::to_string(id) + ": " + std::string(message));
 }
 
 using Field = std::array<std::array<bool, 3>, 3>;
 
-void genField(Field& field, bool& horizontal, bool& vertical)
+void genField(int countField, Field& field, bool& horizontal, bool& vertical)
 {
 	std::random_device rd;
 	std::mt19937 gen(rd());
 	std::uniform_int<int> dist1(0, 18);
-	int figure = dist1(gen);
+	int figure = countField;
+	//int figure = dist1(gen);
 	for (size_t i = 0; i < 3; i++)
 	{
 		for (size_t j = 0; j < 3; j++)
@@ -197,11 +199,11 @@ void train(uint32_t count, Neuralnet<float>& net, std::vector<float>& lines, std
 	for (size_t d = 0; d < count; d++)
 	{
 		right = 0;
-		const int countField = 18;
+		const int countField = 19;
 		error = 0.f;
 		for (size_t i = 0; i < countField; i++)
 		{
-			genField(field, horizontal, vertical);
+			genField(i, field, horizontal, vertical);
 			std::vector<float> input;
 			for (size_t j = 0; j < 3; j++)
 			{
@@ -212,15 +214,14 @@ void train(uint32_t count, Neuralnet<float>& net, std::vector<float>& lines, std
 			}
 			net.setInput(input);
 			net.forwardFeed();
-			bool hor = net.values[3][0] > 0.8f;
-			bool ver = net.values[3][1] > 0.8f;
+			bool hor = net.values[net.values.size()-1][0] > 0.8f;
+			bool ver = net.values[net.values.size() - 1][1] > 0.8f;
 			if ((horizontal == hor) && (vertical == ver))
 			{
 				++right;
 			}
-			net.findError({ (float)horizontal, (float)vertical });
+			net.backPropagation({ horizontal ? 1.0f : 0.0f, vertical ? 1.0f : 0.0f }, 0.8f);
 			error += net.error;
-			net.backPropagation(0.8f);
 			//std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		}
 		error /= countField;
@@ -251,9 +252,9 @@ int main()
 	//glDebugMessageCallback(message_callback, nullptr);
 	Field field{};
 	bool horizontal{}, vertical{};
-	Neuralnet<float> net({ 9, 5 , 4, 2 });
+	Neuralnet<float> net({ 9, 5, 4, 2 });
 	size_t sumEpoh{};
-	int countEpoh{ 1 };
+	int countEpoh{ 1000 };
 	int right{};
 	float error{};
 	std::vector<float> lines;
@@ -294,8 +295,8 @@ int main()
 				}
 				net.setInput(input);
 				net.forwardFeed();
-				horizontal = net.values[3][0] > 0.8f;
-				vertical = net.values[3][1] > 0.8f;
+				horizontal = net.values[net.values.size() - 1][0] > 0.8f;
+				vertical = net.values[net.values.size() - 1][1] > 0.8f;
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Load weights"))
@@ -335,8 +336,6 @@ int main()
 				//Vector<float> c(3);
 				//c = a * b;
 				sumEpoh += countEpoh;
-				lines.clear();
-				errors.clear();
 				std::thread(train, countEpoh, std::ref(net), std::ref(lines), std::ref(errors), std::ref(field), std::ref(horizontal), std::ref(vertical), std::ref(right), std::ref(error)).detach();
 			}
 			ImGui::SameLine();
@@ -349,12 +348,12 @@ int main()
 			ImGui::PlotLines("Right answers", lines.data(), lines.size(), 0, 0, 0.f, 10.f, ImVec2(width / 2.f - ImGui::CalcTextSize("Right answers").x, 128));
 			ImGui::SameLine();
 			ImGui::PlotLines("Errors", errors.data(), errors.size(), 0, 0, 0.f, 1.f, ImVec2(width / 2.f - ImGui::CalcTextSize("Right answers").x, 128));
-			if (ImGui::BeginTable("firstLayer", net.values[0].size, ImGuiTableFlags_SizingFixedSame | ImGuiTableFlags_Borders | ImGuiTableFlags_NoHostExtendX))
+			if (ImGui::BeginTable("firstLayer", net.values[0].size(), ImGuiTableFlags_SizingFixedSame | ImGuiTableFlags_Borders | ImGuiTableFlags_NoHostExtendX))
 			{
 				for (size_t i = 0; i < net.countLayers; ++i)
 				{
 					ImGui::TableNextRow();
-					for (size_t j = 0; j < std::min(net.values[i].size, (size_t)32); ++j)
+					for (size_t j = 0; j < std::min(net.values[i].size(), (size_t)32); ++j)
 					{
 						ImGui::TableSetColumnIndex(j);
 						ImGui::TextColored(ImVec4(0.514f, 0.921f, 0.275f, 1.f), "%lf", net.values[i][j]);
@@ -362,10 +361,10 @@ int main()
 						ImGui::TextColored(ImVec4(0.921f, 0.886f, 0.275f, 1.f), "%lf", net.errors[i][j]);
 						if (i != net.countLayers - 1)
 						{
-							for (size_t k = 0; k < std::min(net.weights[i].column, (size_t)32); ++k)
+							for (size_t k = 0; k < std::min(net.values[i+1].size(), (size_t)32); ++k)
 							{
 								ImGui::TableSetColumnIndex(j);
-								ImGui::TextColored(ImVec4(0.2f, 0.5f, 0.8f, 1.f), "%lf", net.weights[i][j * net.weights[i].column + k]);
+								ImGui::TextColored(ImVec4(0.2f, 0.5f, 0.8f, 1.f), "%lf", net.weights[i][j * net.values[i+1].size() + k]);
 							}
 						}
 					}

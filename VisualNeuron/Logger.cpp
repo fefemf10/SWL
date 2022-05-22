@@ -1,30 +1,39 @@
 #include "Logger.hpp"
 
-std::ofstream Logger::file;
+std::ofstream Logger::openglf;
+std::ofstream Logger::debugf;
 
 void Logger::init()
 {
-	file.open(currentDateTime() + ".txt", std::ios::ate);
+	openglf.open("logs\\opengl\\" + currentDateTime() + ".log", std::ios::ate);
+	debugf.open("logs\\debug.log", std::ios::out | std::ios::trunc);
 }
 
-void Logger::log(const std::string& log)
+void Logger::opengl(std::string_view str)
 {
-	file << '['+currentDateTime()+"] " << log << "\n";
-	file.flush();
+	openglf << '[' + currentDateTime() + "] " << str << "\n";
+	openglf.flush();
+}
+
+void Logger::debug(std::string_view str)
+{
+	debugf << '[' + currentDateTime() + "] " << str << "\n";
+	debugf.flush();
 }
 
 void Logger::deinit()
 {
-	file.close();
+	openglf.close();
+	debugf.close();
 }
 
 const std::string Logger::currentDateTime()
 {
 	time_t rawtime;
 	struct tm* timeinfo;
-	char buffer[64];                                // ÑÑ‚Ñ€Ð¾ÐºÐ°, Ð² ÐºÐ¾Ñ‚Ð¾Ñ€Ð¾Ð¹ Ð±ÑƒÐ´ÐµÑ‚ Ñ…Ñ€Ð°Ð½Ð¸Ñ‚ÑŒÑÑ Ñ‚ÐµÐºÑƒÑ‰ÐµÐµ Ð²Ñ€ÐµÐ¼Ñ
-	time(&rawtime);                               // Ñ‚ÐµÐºÑƒÑ‰Ð°Ñ Ð´Ð°Ñ‚Ð° Ð² ÑÐµÐºÑƒÐ½Ð´Ð°Ñ…
-	timeinfo = localtime(&rawtime);               // Ñ‚ÐµÐºÑƒÑ‰ÐµÐµ Ð»Ð¾ÐºÐ°Ð»ÑŒÐ½Ð¾Ðµ Ð²Ñ€ÐµÐ¼Ñ, Ð¿Ñ€ÐµÐ´ÑÑ‚Ð°Ð²Ð»ÐµÐ½Ð½Ð¾Ðµ Ð² ÑÑ‚Ñ€ÑƒÐºÑ‚ÑƒÑ€Ðµ
-	strftime(buffer, sizeof(buffer), "%H.%M.%S %d.%m.%y", timeinfo); // Ñ„Ð¾Ñ€Ð¼Ð°Ñ‚Ð¸Ñ€ÑƒÐµÐ¼ ÑÑ‚Ñ€Ð¾ÐºÑƒ Ð²Ñ€ÐµÐ¼ÐµÐ½Ð¸
+	char buffer[64];                                // ñòðîêà, â êîòîðîé áóäåò õðàíèòüñÿ òåêóùåå âðåìÿ
+	time(&rawtime);                               // òåêóùàÿ äàòà â ñåêóíäàõ
+	timeinfo = localtime(&rawtime);               // òåêóùåå ëîêàëüíîå âðåìÿ, ïðåäñòàâëåííîå â ñòðóêòóðå
+	strftime(buffer, sizeof(buffer), "%H.%M.%S %d.%m.%y", timeinfo); // ôîðìàòèðóåì ñòðîêó âðåìåíè
 	return buffer;
 }
